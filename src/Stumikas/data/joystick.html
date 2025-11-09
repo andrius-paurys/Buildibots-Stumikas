@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Buildibot Stumikas</title>
+    <style>
+        /* Basic page reset and setup */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #333;
+            color: #eee;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            touch-action: none; /* Prevents scrolling on touch */
+            overscroll-behavior: contain;
+        }
+
+        /* Main container using Flexbox for responsive layout */
+        #main-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .joystick-container {
+            position: relative;
+            width: 50%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1; /* Allows containers to take available space */
+        }
+
+        .joystick-zone {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .joystick-label {
+            margin-top: 15px;
+            font-size: 1rem;
+            color: #aaa;
+        }
+
+        /* Center button area */
+        #center-controls {
+            flex-shrink: 0; /* Prevents the button area from shrinking */
+            padding: 0 20px;
+        }
+
+        #next-animation-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid #888;
+            background-color: #555;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #next-animation-btn:active {
+            background-color: #777;
+        }
+
+        /* Status box at the bottom */
+        #status-box {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 8px 0;
+            text-align: center;
+            font-size: 0.9rem;
+            font-family: "Courier New", Courier, monospace;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .status-value {
+             min-width: 100px; /* Ensures consistent spacing */
+        }
+
+        /* Landscape Mode Adjustments */
+        @media (orientation: landscape) {
+            #main-container {
+                flex-direction: row;
+            }
+            .joystick-container {
+                height: 100%;
+                width: 40%; /* Adjust width for landscape */
+            }
+        }
+
+        /* Portrait Mode Adjustments */
+        @media (orientation: portrait) {
+            #main-container {
+                flex-direction: column;
+                padding-bottom: 50px; /* Space for status box */
+            }
+             .joystick-container {
+                height: 40%; /* Adjust height for portrait */
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="main-container">
+        <div class="joystick-container">
+            <div id="left-joystick-zone" class="joystick-zone"></div>
+            <div class="joystick-label">Movement</div>
+        </div>
+
+        <div id="center-controls">
+            <button id="next-animation-btn" title="Next Animation">⏩</button>
+        </div>
+
+        <div class="joystick-container">
+            <div id="right-joystick-zone" class="joystick-zone"></div>
+            <div class="joystick-label">Bucket</div>
+        </div>
+    </div>
+
+    <div id="status-box">
+        <span class="status-value" id="status-speed">Speed: 0</span>
+        <span class="status-value" id="status-turn">Turn: 0</span>
+        <span class="status-value" id="status-bucketX">BucketX: 0</span>
+        <span class="status-value" id="status-bucketY">BucketY: 0</span>
+    </div>
+
+    <script src="/nipplejs.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Configuration ---
+            const UPDATE_INTERVAL_MS = 50;
+            const SIGNIFICANT_CHANGE_THRESHOLD = 10;
+            const FORCED_UPDATE_LOOPS = 5; // Send update every 5 loops if no significant change
+
+            // --- State Management ---
+            let loopCounter = 0;
+            const currentState = {
+                speed: 0,
+                turn: 0,
+                bucketX: 0,
+                bucketY: 0
+            };
+            // Keep track of the last state sent to the server
+            let lastSentState = { ...currentState };
+
+            // --- DOM Element References ---
+            const leftZone = document.getElementById('left-joystick-zone');
+            const rightZone = document.getElementById('right-joystick-zone');
+            const nextAnimationBtn = document.getElementById('next-animation-btn');
+
+            // --- Status Display Elements ---
+            const statusSpeed = document.getElementById('status-speed');
+            const statusTurn = document.getElementById('status-turn');
+            const statusBucketX = document.getElementById('status-bucketX');
+            const statusBucketY = document.getElementById('status-bucketY');
+
+
+            // --- Joystick Initialization ---
+
+            // Left Stick (Movement): Resets when let go
+            const leftStick = nipplejs.create({
+                zone: leftZone,
+                mode: 'static', 
+                position: { left: '50%', top: '50%' },
+                color: 'cyan',
+                size: 150
+            });
+
+            // Right Stick (Bucket): Stays where you leave it
+            const rightStick = nipplejs.create({
+                zone: rightZone,
+                mode: 'static', // Stays in place
+                position: { left: '50%', top: '50%' },
+                color: 'lime',
+                size: 150
+            });
+
+
+            // --- Event Listeners ---
+
+            // Left stick events
+            leftStick.on('move', (evt, data) => {
+                const maxRange = 255;
+                const distance = Math.min(data.distance, 75); // Cap distance to size/2
+                const angle = data.angle.radian;
+
+                // Convert polar coordinates to Cartesian and scale
+                currentState.speed = Math.round((distance * Math.sin(angle) / 75) * maxRange);
+                currentState.turn = Math.round((distance * Math.cos(angle) / 75) * maxRange);
+            });
+
+            leftStick.on('end', () => {
+                // Reset data values
+                currentState.speed = 0;
+                currentState.turn = 0;
+            });
+
+            // Right stick events
+            rightStick.on('move', (evt, data) => {
+                const maxRange = 90;
+                const distance = Math.min(data.distance, 75);
+                const angle = data.angle.radian;
+
+                currentState.bucketY = Math.round((distance * Math.sin(angle) / 75) * maxRange);
+                currentState.bucketX = Math.round((distance * Math.cos(angle) / 75) * maxRange);
+            });
+
+            // Center button event
+            nextAnimationBtn.addEventListener('click', () => {
+                console.log('Sending /nextAnimation request...');
+                fetch('/nextAnimation', { method: 'POST' })
+                    .then(response => {
+                        if (!response.ok) console.error('NextAnimation API call failed');
+                        else console.log('NextAnimation API call successful');
+                    })
+                    .catch(error => console.error('Error sending NextAnimation request:', error));
+            });
+
+            // --- Core Logic ---
+
+            /**
+             * Updates the status text at the bottom of the screen.
+             */
+            function updateStatusDisplay() {
+                statusSpeed.textContent = `Speed: ${currentState.speed}`;
+                statusTurn.textContent = `Turn: ${currentState.turn}`;
+                statusBucketX.textContent = `BucketX: ${currentState.bucketX}`;
+                statusBucketY.textContent = `BucketY: ${currentState.bucketY}`;
+            }
+
+            /**
+             * Checks if the state has changed significantly since the last send.
+             */
+            function hasSignificantChange() {
+                return (
+                    Math.abs(currentState.speed - lastSentState.speed) > SIGNIFICANT_CHANGE_THRESHOLD ||
+                    Math.abs(currentState.turn - lastSentState.turn) > SIGNIFICANT_CHANGE_THRESHOLD ||
+                    Math.abs(currentState.bucketX - lastSentState.bucketX) > SIGNIFICANT_CHANGE_THRESHOLD ||
+                    Math.abs(currentState.bucketY - lastSentState.bucketY) > SIGNIFICANT_CHANGE_THRESHOLD
+                );
+            }
+
+            /**
+             * Sends the current state to the /updateState API endpoint.
+             */
+            function sendStateUpdate() {
+                const body = new URLSearchParams();
+                body.append('speed', currentState.speed);
+                body.append('turn', currentState.turn);
+                body.append('bucketX', currentState.bucketX);
+                body.append('bucketY', currentState.bucketY);
+
+                console.log(`Sending update:`, Object.fromEntries(body));
+
+                fetch('/updateState', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: body
+                }).catch(error => console.error('Error sending state update:', error));
+
+                // Update the last sent state and reset the counter
+                lastSentState = { ...currentState };
+                loopCounter = 0;
+            }
+
+            // --- Main Update Loop ---
+            setInterval(() => {
+                loopCounter++;
+                updateStatusDisplay();
+
+                const significantChange = hasSignificantChange();
+
+                // Send if there's a big change OR if it's the 5th loop
+                if (significantChange || loopCounter >= FORCED_UPDATE_LOOPS) {
+                    sendStateUpdate();
+                }
+
+            }, UPDATE_INTERVAL_MS);
+        });
+    </script>
+</body>
+</html>
