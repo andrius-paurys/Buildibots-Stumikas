@@ -80,13 +80,13 @@ void setup() {
   xTaskCreate(
       screenLoop,         // Task function
       "screenLoop",       // Task name (for debugging)
-      4096,               // Stack size in words        
+      4096,               // Stack size in words
       NULL,               // Task parameters
       tskIDLE_PRIORITY+1, // Task priority - using lowest possible, screen not important
       NULL                // Task handle
   );
   print_info("LED matrix screen render task launched.");
-  
+
   motion_setup();
   bucket_setup();
 
@@ -95,7 +95,7 @@ void setup() {
   xTaskCreate(
       actuatorsLoop,      // Task function
       "actuatorsLoop",    // Task name (for debugging)
-      4096,               // Stack size in words        
+      4096,               // Stack size in words
       NULL,               // Task parameters
       tskIDLE_PRIORITY+1, // Task priority
       NULL                // Task handle
