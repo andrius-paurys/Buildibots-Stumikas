@@ -7,14 +7,14 @@
 
 
 // LED matrix DI pin
-#define LED_PIN       15
+#define LED_PIN       GPIO_NUM_15
 
 // Servo motor control pins
-#define SERVO1_PIN    1
-#define SERVO2_PIN    14
+#define SERVO1_PIN    GPIO_NUM_1
+#define SERVO2_PIN    GPIO_NUM_14
 
 // DC motor pins
-#define MOTOR_1A_PIN  18
-#define MOTOR_1B_PIN  40
-#define MOTOR_2A_PIN  17
-#define MOTOR_2B_PIN  21
+#define MOTOR_1A_PIN  GPIO_NUM_18
+#define MOTOR_1B_PIN  GPIO_NUM_40
+#define MOTOR_2A_PIN  GPIO_NUM_17
+#define MOTOR_2B_PIN  GPIO_NUM_21
