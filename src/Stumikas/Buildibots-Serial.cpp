@@ -43,14 +43,14 @@ namespace {
     xTaskCreate(
         loopTaskList,             // Task function
         "loopTaskList",           // Task name (for debugging)
-        TASKLIST_STACK_SIZE,      // Stack size in words        
+        TASKLIST_STACK_SIZE,      // Stack size in words
         NULL,                     // Task parameters
         tskIDLE_PRIORITY+1,       // Task priority - using lowest possible
         NULL                      // Task handle
     );
   }
 
-}
+} // namespace
 
 #endif // BUILDIBOTS_DEBUG
 

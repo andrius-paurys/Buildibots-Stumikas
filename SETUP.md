@@ -1,4 +1,4 @@
-# Buildibots Stumikas Build Setup
+# Buildibots Stumikas Build Environment Setup Guide
 
 This guide provides the necessary steps to set up your environment, install dependencies, and
 upload the firmware and filesystem to the Axiometa ESP32 board.
@@ -20,12 +20,12 @@ upload the firmware and filesystem to the Axiometa ESP32 board.
 
 ## 2. Environment Setup
 
-### ⚙️ Install ESP32 Board Support
+### ⚙️ Installing ESP32 Board Support
 
-You must add support for ESP32 boards to your Arduino environment.
+You need to add support for ESP32 boards to your Arduino environment.
 
 
-**Using Arduino IDE (UI):**
+**Using the Arduino IDE (UI):**
 
 >  1.   Open the Arduino IDE.
 >  2.   Go to **File > Preferences** (or **Arduino IDE > Settings...** on macOS).
@@ -39,7 +39,7 @@ You must add support for ESP32 boards to your Arduino environment.
 >  8.   Find "esp32 by Espressif Systems" and click **Install**. Last tested with version _3.3.2_.
 
 
-**Using Arduino CLI:**
+**Using the Arduino CLI:**
 
 >  Run the following commands to add the URL and install the core:
 >  
@@ -53,9 +53,11 @@ You must add support for ESP32 boards to your Arduino environment.
 
 
 ---
-### 📦 Install Required Libraries
+### 📦 Installing Library Dependencies
 
-The firmware depends on specific libraries. Note: The versions specified are the ones last tested with the firmware.
+The firmware depends on specific libraries. Note: The versions listed are the ones last tested
+with the firmware.
+
 
 *  Async TCP (_v3.4.9_)
 *  ESP Async WebServer (_v3.8.1_)
@@ -85,19 +87,18 @@ The firmware depends on specific libraries. Note: The versions specified are the
 
 
 ---
-### 📁 Install LittleFS Upload Tool
+### 📁 Installing LittleFS Upload Tool
 
 To upload the static web files (HTML, JS, CSS) to the ESP32's filesystem, you need a plugin.
 
 1.  Go to the [arduino-littlefs-upload](https://github.com/earlephilhower/arduino-littlefs-upload)
     releases page.
-
 2.  Download the latest VSIX file (e.g. `arduino-littlefs-upload-1.5.5.vsix`).
-
 3.  Copy the VSIX file to `~/.arduinoIDE/plugins/` on Mac and Linux or
     `C:\Users\<username>\.arduinoIDE\plugins\` on Windows.
-
-5.  For more information consult the [README](https://github.com/earlephilhower/arduino-littlefs-upload?tab=readme-ov-file#installation).
+4.  Restart Arduino IDE.
+5.  For more information consult the
+    [README](https://github.com/earlephilhower/arduino-littlefs-upload?tab=readme-ov-file#installation).
 
 
 ---
@@ -106,24 +107,30 @@ To upload the static web files (HTML, JS, CSS) to the ESP32's filesystem, you ne
 First, open the sketch (`Stumikas.ino` file) in Arduino IDE. Then, perform the following.
 
 
-### ⚙️ Select the Target Board ###
+### ⚙️ Selecting Target Board
 
-You must select the correct board before compiling and uploading.
+Select the correct board before compiling and uploading.
 
 *  **Arduino IDE:** Go to **Tools > Board > esp32 > Axiometa PIXIE M1**.
 *  **Arduino CLI:** Use the Fully Qualified Board Name (FQBN)
    `esp32:esp32:axiometa_pixie_m1` in your commands.
 
 
-### 🛠️ Configure the Firmware ###
+### 🛠️ Configuring the Firmware
 
 Before compiling, edit the configuration files to match your setup:
 
 *  `config-wifi.h`: Set your Wi-Fi network's SSID and password.
 *  `config-pins.h`: Verify the pin definitions match your wiring.
 
+> ℹ️ You **do not need to configure Wi-Fi** for the bot to be usable. If `config-wifi.h` is left
+> with the default settings, the ESP32 will automatically start in **Access Point (AP) mode**.
+> The AP will be named _Buildibots Stumikas_. When you connect a device, a captive portal
+> with a web-based joystick will automatically open in your browser. If not - you can access the
+> controls using the default URL [http://4.3.2.1/](http://4.3.2.1/) in your browser.
 
-### 🚀 Compile and Upload Firmware ###
+
+### 🚀 Compiling and Uploading the Firmware
 
 **Arduino IDE:**
 
@@ -136,17 +143,16 @@ Before compiling, edit the configuration files to match your setup:
     one step.
 
 
-### 📁 Upload Filesystem (LittleFS) ###
+### 📁 Uploading Filesystem (LittleFS) ###
 
 The `ESPAsyncWebServer` serves static files from the ESP32's internal flash memory. These files
 must be uploaded separately.
 
-1.  Ensure your sketch is open in the Arduino IDE. Serial Monitor must be closed.
-3.  First **Build and Upload** the sketch (as described above).
-2.  Press **Ctrl+Shift+P** and search for **Upload LittleFS to Pico/ESP8266/ESP32** to start
-    the upload.
+1.  First **Build and Upload** the sketch (as described above).
+2.  With the Arduino sketch till open, press **Ctrl+Shift+P** and search for **Upload LittleFS
+    to Pico/ESP8266/ESP32** to start the upload.
 
-This will build a LittleFS file system image from the `data` folder and upload it to the board.
+This will build a LittleFS filesystem image from the `data` folder and upload it to the board.
 
 
 
@@ -160,7 +166,7 @@ browser, e.g.: [http://4.3.2.1/](http://4.3.2.1/).
 > 💡 Replace the default `4.3.2.1` with the actual IP address assigned to the ESP32, which
 > you can configure in `config-wifi.h` or view via the Serial Monitor on startup.
 
-You can also send direct control commands to the robot programmatically using HTTP POST
+You can also send direct control commands to the bot programmatically using HTTP POST
 requests, e.g. using cURL:
 
 ```
