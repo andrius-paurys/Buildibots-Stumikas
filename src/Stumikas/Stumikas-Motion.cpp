@@ -77,8 +77,8 @@ void motion_tick(int speed, int turn) {
   speed = constrain(speed, -255, 255);
   turn = constrain(turn, -255, 255);
 
-  int speed_left = constrain(speed-turn, -255, 255);
-  int speed_right = constrain(speed+turn, -255, 255);
+  int speed_left = constrain(speed+turn, -255, 255);
+  int speed_right = constrain(speed-turn, -255, 255);
 
   set_motor_speed(MOTOR_1A_PIN, MOTOR_1B_PIN, speed_left);
   set_motor_speed(MOTOR_2A_PIN, MOTOR_2B_PIN, speed_right);

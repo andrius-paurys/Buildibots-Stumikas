@@ -82,7 +82,7 @@ void setup() {
       "screenLoop",       // Task name (for debugging)
       4096,               // Stack size in words        
       NULL,               // Task parameters
-      tskIDLE_PRIORITY+1, // Task priority - using lowest possible, screen not important
+      tskIDLE_PRIORITY+3, // Task priority - using lowest possible, screen not important
       NULL                // Task handle
   );
   print_info("LED matrix screen render task launched.");
@@ -97,7 +97,7 @@ void setup() {
       "actuatorsLoop",    // Task name (for debugging)
       4096,               // Stack size in words        
       NULL,               // Task parameters
-      tskIDLE_PRIORITY+1, // Task priority
+      tskIDLE_PRIORITY+2, // Task priority
       NULL                // Task handle
   );
   print_info("Actuator control loop task launched.");
