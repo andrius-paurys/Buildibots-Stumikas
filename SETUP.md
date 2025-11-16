@@ -1,4 +1,4 @@
-# Buildibots Stumikas Build Setup
+# Buildibots Stumikas Build Environment Setup Guide
 
 This guide provides the necessary steps to set up your environment, install dependencies, and
 upload the firmware and filesystem to the Axiometa ESP32 board.
