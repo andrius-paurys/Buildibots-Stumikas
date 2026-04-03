@@ -1,4 +1,4 @@
-# Buildibots Stumikas Build Environment Setup Guide
+# Buildibots Stumikas Build Setup
 
 This guide provides the necessary steps to set up your environment, install dependencies, and
 upload the firmware and filesystem to the Axiometa ESP32 board.
@@ -148,9 +148,10 @@ Before compiling, edit the configuration files to match your setup:
 The `ESPAsyncWebServer` serves static files from the ESP32's internal flash memory. These files
 must be uploaded separately.
 
-1.  First **Build and Upload** the sketch (as described above).
-2.  With the Arduino sketch till open, press **Ctrl+Shift+P** and search for **Upload LittleFS
-    to Pico/ESP8266/ESP32** to start the upload.
+1.  Ensure your sketch is open in the Arduino IDE. Serial Monitor must be closed.
+2.  First **Build and Upload** the sketch (as described above).
+3.  Press **Ctrl+Shift+P** and search for **Upload LittleFS to Pico/ESP8266/ESP32** to start
+    the upload.
 
 This will build a LittleFS filesystem image from the `data` folder and upload it to the board.
 
