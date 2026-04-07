@@ -12,7 +12,9 @@
 // Enables debug messages and periodically prints the FreeRTOS task list.
 #define BUILDIBOTS_DEBUG 0
 
+// Uncomment to force serial output to UART0
 //#define Serial Serial0
+
 #define SERIAL_BAUD_RATE 115200
 
 
@@ -34,8 +36,8 @@ namespace {
 
       print_debug("FreeRTOS task list:");
       vTaskList(buffer);
-      Serial0.println("Task Name\tState\tPrio\tStack\t#");
-      Serial0.println(buffer);
+      Serial.println("Task Name\tState\tPrio\tStack\t#");
+      Serial.println(buffer);
     }
   }
 
@@ -56,7 +58,7 @@ namespace {
 
 
 void serial_setup() {
-  Serial0.begin(SERIAL_BAUD_RATE);
+  Serial.begin(SERIAL_BAUD_RATE);
   print_info("Hello world!");
 
   #if BUILDIBOTS_DEBUG
@@ -65,25 +67,25 @@ void serial_setup() {
 }
 
 void print_error(const char s[]) {
-  Serial0.print("[ERROR] ");
-  Serial0.println(s);
+  Serial.print("[ERROR] ");
+  Serial.println(s);
 }
 
 void print_info(const char s[]) {
-  Serial0.print("[INFO]  ");
-  Serial0.println(s);
+  Serial.print("[INFO]  ");
+  Serial.println(s);
 }
 
 void print_debug(const char s[]) {
   #if BUILDIBOTS_DEBUG
-  Serial0.print("[DEBUG] ");
-  Serial0.println(s);
+  Serial.print("[DEBUG] ");
+  Serial.println(s);
   #endif // BUILDIBOTS_DEBUG
 }
 
 void print_warn(const char s[]) {
-  Serial0.print("[WARN]  ");
-  Serial0.println(s);
+  Serial.print("[WARN]  ");
+  Serial.println(s);
 }
 
 void print_error(const String &s) { print_error(s.c_str()); }

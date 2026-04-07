@@ -136,6 +136,7 @@ Before compiling, edit the configuration files to match your setup:
 
 1.  Select the correct **Port** from the **Tools** menu.
 2.  (Optional) In the **Tools** menu select these options:
+    *  To monitor debug messages through Serial Monitor, set **USB CDC On Boot** to **Enabled**;
     *  Desired **Core Debug Level**;
     *  Set **Erase All Flash Before Sketch Upload** to **Enabled**;
     *  Set **Partition Scheme** to **Minimal SPIFFS**.
