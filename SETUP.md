@@ -59,9 +59,9 @@ The firmware depends on specific libraries. Note: The versions listed are the on
 with the firmware.
 
 
-*  Async TCP (_v3.4.9_)
-*  ESP Async WebServer (_v3.8.1_)
-*  ESP32Servo (_v3.0.9_)
+*  Async TCP (_v3.4.10_)
+*  ESP Async WebServer (_v3.10.3_)
+*  ESP32Servo (_v3.1.3_)
 *  FastLED (_v3.10.3_)
 *  LittleFS_esp32 (_v1.0.6_)
 
@@ -78,9 +78,9 @@ with the firmware.
 >  
 >  ```bash
 >  # Install libraries from the standard registry
->  arduino-cli lib install --no-overwrite "Async TCP"@3.4.9
->  arduino-cli lib install --no-overwrite "ESP Async WebServer"@3.8.1
->  arduino-cli lib install --no-overwrite "ESP32Servo"@3.0.9
+>  arduino-cli lib install --no-overwrite "Async TCP"@3.4.10
+>  arduino-cli lib install --no-overwrite "ESP Async WebServer"@3.10.3
+>  arduino-cli lib install --no-overwrite "ESP32Servo"@3.1.3
 >  arduino-cli lib install --no-overwrite "FastLED"@3.10.3
 >  arduino-cli lib install --no-overwrite "LittleFS_esp32"@1.0.6
 >  ```
@@ -93,7 +93,7 @@ To upload the static web files (HTML, JS, CSS) to the ESP32's filesystem, you ne
 
 1.  Go to the [arduino-littlefs-upload](https://github.com/earlephilhower/arduino-littlefs-upload)
     releases page.
-2.  Download the latest VSIX file (e.g. `arduino-littlefs-upload-1.5.5.vsix`).
+2.  Download the latest VSIX file (e.g. `arduino-littlefs-upload-1.6.3.vsix`).
 3.  Copy the VSIX file to `~/.arduinoIDE/plugins/` on Mac and Linux or
     `C:\Users\<username>\.arduinoIDE\plugins\` on Windows.
 4.  Restart Arduino IDE.
