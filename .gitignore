@@ -1,0 +1,6 @@
+
+# Vim swap files
+[._]*.sw[m-p]
+
+# JetBrains configs
+.idea/
