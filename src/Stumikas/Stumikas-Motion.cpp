@@ -58,10 +58,13 @@ namespace {
  * @return void
  */
 void motion_setup() {
-  pinMode(MOTOR_1A_PIN, OUTPUT);
-  pinMode(MOTOR_1B_PIN, OUTPUT);
-  pinMode(MOTOR_2A_PIN, OUTPUT);
-  pinMode(MOTOR_2B_PIN, OUTPUT);
+  pinMode(MOTOR_ENABLE_PIN, OUTPUT);
+  digitalWrite(MOTOR_ENABLE_PIN, LOW);
+
+  pinMode(MOTOR_LEFT_PIN1, OUTPUT);
+  pinMode(MOTOR_LEFT_PIN2, OUTPUT);
+  pinMode(MOTOR_RIGHT_PIN1, OUTPUT);
+  pinMode(MOTOR_RIGHT_PIN2, OUTPUT);
 }
 
 
@@ -80,6 +83,18 @@ void motion_tick(int speed, int turn) {
   int speed_left = constrain(speed+turn, -255, 255);
   int speed_right = constrain(speed-turn, -255, 255);
 
-  set_motor_speed(MOTOR_1A_PIN, MOTOR_1B_PIN, speed_left);
-  set_motor_speed(MOTOR_2A_PIN, MOTOR_2B_PIN, speed_right);
+  // Disable chip if all motors are supposed to be stopped
+  if (speed_left == 0 && speed_right == 0) {
+    digitalWrite(MOTOR_ENABLE_PIN, LOW);
+  }
+
+  // Send motor speeds as PWM to mottor controller
+  set_motor_speed(MOTOR_LEFT_PIN1, MOTOR_LEFT_PIN2, -speed_left);
+  set_motor_speed(MOTOR_RIGHT_PIN1, MOTOR_RIGHT_PIN2, -speed_right);
+
+  // Enable chip if any motor is supposed to be running
+  if (speed_left > 0 || speed_right > 0) {
+    digitalWrite(MOTOR_ENABLE_PIN, HIGH);
+  }
+
 }
