@@ -7,7 +7,7 @@
 
 
 // LED matrix DI pin
-#define LED_PIN           GPIO_NUM_15
+#define LED_PIN           GPIO_NUM_40
 
 // Servo motor control pins
 #define SERVO1_PIN        GPIO_NUM_1
