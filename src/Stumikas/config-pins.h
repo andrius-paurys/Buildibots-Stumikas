@@ -10,8 +10,11 @@
 #define LED_PIN           GPIO_NUM_40
 
 // Servo motor control pins
-#define SERVO1_PIN        GPIO_NUM_1
-#define SERVO2_PIN        GPIO_NUM_14
+// x axis servo - SERVO1
+#define SERVO1_PIN        GPIO_NUM_5
+// y axis servo - SERVO2
+#define SERVO2_PIN        GPIO_NUM_4
+// other unused servo ports - GPIO_NUM_6 and GPIO_NUM_8
 
 // DC motor pins
 #define MOTOR_LEFT_PIN1   GPIO_NUM_14
