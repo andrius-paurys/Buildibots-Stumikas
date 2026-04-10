@@ -111,9 +111,9 @@ First, open the sketch (`Stumikas.ino` file) in Arduino IDE. Then, perform the f
 
 Select the correct board before compiling and uploading.
 
-*  **Arduino IDE:** Go to **Tools > Board > esp32 > Axiometa PIXIE M1**.
+*  **Arduino IDE:** Go to **Tools > Board > esp32 > ESP32S3 Dev Module**.
 *  **Arduino CLI:** Use the Fully Qualified Board Name (FQBN)
-   `esp32:esp32:axiometa_pixie_m1` in your commands.
+   `esp32:esp32:esp32s3` in your commands.
 
 
 ### 🛠️ Configuring the Firmware
