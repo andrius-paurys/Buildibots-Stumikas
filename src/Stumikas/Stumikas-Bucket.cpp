@@ -11,10 +11,10 @@
 
 
 // Measured angle clearances of the bot body
-#define SERVO1_MIN -25
-#define SERVO1_MAX 40
-#define SERVO2_MIN -80
-#define SERVO2_MAX 40
+#define SERVO1_MIN -60    // horizontal clearance
+#define SERVO1_MAX 25
+#define SERVO2_MIN -70    // vertical clearance
+#define SERVO2_MAX 60
 
 // PWM signal characteristic
 #define MIN_PULSE_WIDTH 500
