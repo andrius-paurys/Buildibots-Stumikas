@@ -14,7 +14,7 @@
 
 
 #define NUM_LEDS     2
-#define BRIGHTNESS_I 255
+#define BRIGHTNESS_I 200
 #define LED_CHIP     WS2812
 #define COLOR_MODE   GRB
 
