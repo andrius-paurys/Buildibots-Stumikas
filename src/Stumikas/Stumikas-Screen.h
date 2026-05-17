@@ -19,7 +19,7 @@ extern int8_t switchAnimation;
 
 
 /**
- * Initialize FastLED.
+ * Initialize FastLED and run screen refresh loop task.
  * @return void
  */
 void screen_setup();
