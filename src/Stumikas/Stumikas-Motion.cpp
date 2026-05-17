@@ -93,7 +93,7 @@ void motion_tick(int speed, int turn) {
   set_motor_speed(MOTOR_RIGHT_PIN1, MOTOR_RIGHT_PIN2, -speed_right);
 
   // Enable chip if any motor is supposed to be running
-  if (speed_left > 0 || speed_right > 0) {
+  if (speed_left != 0 || speed_right != 0) {
     digitalWrite(MOTOR_ENABLE_PIN, HIGH);
   }
 

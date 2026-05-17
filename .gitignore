@@ -4,3 +4,6 @@
 
 # JetBrains configs
 .idea/
+
+# LittleFS compiled image
+mklittlefs.bin
