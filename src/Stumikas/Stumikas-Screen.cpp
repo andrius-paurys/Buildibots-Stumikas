@@ -6,6 +6,9 @@
 
 #include "Stumikas-Screen.h"
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 #include <FastLED.h>
 #include "Stumikas-images.h"
 #include "Buildibots-Serial.h"
@@ -16,6 +19,20 @@
 #define BRIGHTNESS  30
 #define LED_CHIP    WS2812
 #define COLOR_MODE  GRB
+
+// Target frames per second for the LED matrix screen
+#define SCREEN_TARGET_FPS 10
+
+// Animation image index that is first shown
+#define STARTUP_IMAGE_INDEX 1
+
+
+/**
+ * If `switchAnimation` is a positive integer, on next frame draw, the animation will switch to
+ * the image at that index, and the frame counter will be reset. If value is -1, then o animation
+ * switch occurs.
+*/
+int8_t switchAnimation = STARTUP_IMAGE_INDEX;
 
 
 namespace {
@@ -82,6 +99,32 @@ namespace {
     (*frameIndex)++;
     if (*frameIndex >= frameCount) { *frameIndex = 0; }
   }
+
+
+  /**
+  * LED matrix screen render loop.
+  * @return void
+  */
+  static void screenLoop( void *pvParameters ) {
+
+    // Initialize `xLastWakeTime` with the current time.
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xTimeIncrement  = pdMS_TO_TICKS(1000 / SCREEN_TARGET_FPS);
+
+    for(;;) {
+      // If a request to switch to some other animation is recorded, it is consumed here.
+      if (switchAnimation > -1) {
+        currentImage = switchAnimation;
+        switchAnimation = -1;
+        currentFrame = 0;
+      }
+
+      drawFrame(currentImage, &currentFrame);
+      vTaskDelayUntil(&xLastWakeTime, xTimeIncrement);
+    }
+
+  }
+
 } // namespace
 
 
@@ -93,27 +136,16 @@ void screen_setup() {
   print_info("Initializing FastLED...");
   FastLED.addLeds<LED_CHIP, LED_PIN, COLOR_MODE>(leds, NUM_LEDS);
   FastLED.setBrightness(BRIGHTNESS);
-}
 
-
-/**
- * @brief Draws a single frame of the currently active animation.
- *
- * If `nextAnim` is a positive integer, the animation will switch to
- * the image at that index, and the frame counter will be reset.
- *
- * @param nextAnim Pointer to an int8_t specifying the next animation index (optional).
- *                 If value is `-1`, no animation switch occurs.
- * @return void
- */
-void screen_tick(int8_t* pNextAnim) {
-
-    // If a request to switch to some other animation is recorded, it is consumed here.
-    if (*pNextAnim > -1) {
-      currentImage = *pNextAnim;
-      *pNextAnim = -1;
-      currentFrame = 0;
-    }
-
-    drawFrame(currentImage, &currentFrame);
+  // Run the LED matrix render loop in a separate task, so it
+  // does not block other workloads from CPU time.
+  xTaskCreate(
+      screenLoop,         // Task function
+      "screenLoop",       // Task name (for debugging)
+      4096,               // Stack size in words
+      NULL,               // Task parameters
+      tskIDLE_PRIORITY+3, // Task priority
+      NULL                // Task handle
+  );
+  print_info("LED matrix screen render task launched.");
 }

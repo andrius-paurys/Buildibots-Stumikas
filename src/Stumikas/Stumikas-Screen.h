@@ -11,23 +11,18 @@
 
 
 /**
+ * If `switchAnimation` is a positive integer, on next frame draw, the animation will switch to
+ * the image at that index, and the frame counter will be reset. If value is -1, then o animation
+ * switch occurs.
+*/
+extern int8_t switchAnimation;
+
+
+/**
  * Initialize FastLED.
  * @return void
  */
 void screen_setup();
-
-
-/**
- * @brief Draws a single frame of the currently active animation.
- *
- * If `nextAnim` is a positive integer, the animation will switch to
- * the image at that index, and the frame counter will be reset.
- *
- * @param nextAnim Pointer to an int8_t specifying the next animation index (optional).
- *                 If value is `-1`, no animation switch occurs.
- * @return void
- */
-void screen_tick(int8_t* nextAnim);
 
 
 #endif
