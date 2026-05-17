@@ -9,6 +9,9 @@
 // LED matrix DI pin
 #define LED_PIN           GPIO_NUM_40
 
+// Inidicator LEDs input pin
+#define INDICATORS_PIN    GPIO_NUM_41
+
 // Servo motor control pins
 // x axis servo - SERVO1
 #define SERVO1_PIN        GPIO_NUM_5
