@@ -13,10 +13,10 @@
 #include "config-pins.h"
 
 
-#define NUM_LEDS    2
-#define BRIGHTNESS  150
-#define LED_CHIP    WS2812
-#define COLOR_MODE  GRB
+#define NUM_LEDS     2
+#define BRIGHTNESS_I 200
+#define LED_CHIP     WS2812
+#define COLOR_MODE   GRB
 
 // Target refresh rate for indicator color values
 #define INDICATORS_TARGET_FPS 15
@@ -32,6 +32,9 @@ namespace {
   // LED matrix RGB value buffer
   CRGB leds[NUM_LEDS];
 
+  // Pointer to where the bot speed is stored
+  int *pSpeed;
+
 
   /**
   * Indicator color update/render loop.
@@ -44,7 +47,27 @@ namespace {
     const TickType_t xTimeIncrement  = pdMS_TO_TICKS(1000 / INDICATORS_TARGET_FPS);
 
     for(;;) {
-      currentColor.hue += 10;
+
+      // Cycle hue at a speed proportinal to bot motor power
+      if(*pSpeed > 0) {
+        currentColor.hue += *pSpeed / 15;
+      }
+
+      // Red when stopped
+      if(*pSpeed == 0) {
+        //currentColor.hue = 0;
+      }
+
+      // Reset saturation after reversing
+      if(*pSpeed >= 0) {
+        currentColor.sat = 255;
+      }
+
+      // Full white when reversing
+      if(*pSpeed < 0) {
+        currentColor.hue = 0;
+        currentColor.sat = 0;
+      }
 
       leds[0] = currentColor;
       leds[1] = currentColor;
@@ -61,12 +84,16 @@ namespace {
 
 /**
  * Initialize FastLED and run task for indicator color updates.
+
+ * @param speed Pointer to where should indicators read the speed of the bot.
  * @return void
  */
-void indicators_setup() {
+void indicators_setup(int* speed) {
   print_info("Initializing FastLED for indicators...");
   FastLED.addLeds<LED_CHIP, INDICATORS_PIN, COLOR_MODE>(leds, NUM_LEDS);
-  FastLED.setBrightness(BRIGHTNESS);
+  FastLED.setBrightness(BRIGHTNESS_I);
+
+  pSpeed = speed;
 
   // Run the indicator render loop in a separate task, so it
   // does not block other workloads from CPU time.

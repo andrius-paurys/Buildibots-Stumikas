@@ -11,9 +11,11 @@
 
 /**
  * Initialize FastLED and run task for indicator color updates.
+
+ * @param speed Pointer to where should indicators read the speed of the bot.
  * @return void
  */
-void indicators_setup();
+void indicators_setup(int* speed);
 
 
 #endif

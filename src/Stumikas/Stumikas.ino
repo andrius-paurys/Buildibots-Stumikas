@@ -48,7 +48,7 @@ static void actuatorsLoop( void *pvParameters ) {
 void setup() {
   serial_setup();
   screen_setup();
-  indicators_setup();
+  indicators_setup(&speed);
 
   motion_setup();
   bucket_setup();
