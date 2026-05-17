@@ -14,7 +14,7 @@
 
 
 #define NUM_LEDS     2
-#define BRIGHTNESS_I 200
+#define BRIGHTNESS_I 255
 #define LED_CHIP     WS2812
 #define COLOR_MODE   GRB
 
@@ -72,6 +72,10 @@ namespace {
       leds[0] = currentColor;
       leds[1] = currentColor;
 
+      // Apply brightness
+      leds[0].nscale8_video(BRIGHTNESS_I);
+      leds[1].nscale8_video(BRIGHTNESS_I);
+
       FastLED.show();
 
       vTaskDelayUntil(&xLastWakeTime, xTimeIncrement);
@@ -91,7 +95,6 @@ namespace {
 void indicators_setup(int* speed) {
   print_info("Initializing FastLED for indicators...");
   FastLED.addLeds<LED_CHIP, INDICATORS_PIN, COLOR_MODE>(leds, NUM_LEDS);
-  FastLED.setBrightness(BRIGHTNESS_I);
 
   pSpeed = speed;
 

@@ -94,6 +94,11 @@ namespace {
       leds[i] = palette[ pImage[*frameIndex][i] ];
     }
 
+    // Apply brightness
+    for(size_t i=0; i < NUM_LEDS; i++) {
+      leds[i].nscale8_video(BRIGHTNESS);
+    }
+
     FastLED.show();
 
     (*frameIndex)++;
@@ -135,7 +140,6 @@ namespace {
 void screen_setup() {
   print_info("Initializing FastLED...");
   FastLED.addLeds<LED_CHIP, LED_PIN, COLOR_MODE>(leds, NUM_LEDS);
-  FastLED.setBrightness(BRIGHTNESS);
 
   // Run the LED matrix render loop in a separate task, so it
   // does not block other workloads from CPU time.
