@@ -10,6 +10,7 @@
 #include "Buildibots-Serial.h"
 #include "Buildibots-WiFi.h"
 #include "Stumikas-Screen.h"
+#include "Stumikas-Indicators.h"
 #include "Stumikas-Motion.h"
 #include "Stumikas-Bucket.h"
 #include "Stumikas-Webserver.h"
@@ -47,6 +48,7 @@ static void actuatorsLoop( void *pvParameters ) {
 void setup() {
   serial_setup();
   screen_setup();
+  indicators_setup();
 
   motion_setup();
   bucket_setup();
