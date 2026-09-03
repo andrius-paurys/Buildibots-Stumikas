@@ -89,3 +89,8 @@ constexpr Image IMAGES[NUM_IMAGES] = {
     { reverse_frames, 14 }, // reverse
 };
 
+// Indices into IMAGES[], named after the source GIF files.
+constexpr int IMAGE_FORWARD      = 0; // forward.gif
+constexpr int IMAGE_STARTUP_LOGO = 1; // startup-logo.gif
+constexpr int IMAGE_REVERSE      = 2; // reverse.gif
+
