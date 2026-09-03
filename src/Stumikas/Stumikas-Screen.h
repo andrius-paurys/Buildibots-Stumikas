@@ -19,6 +19,15 @@ extern int8_t switchAnimation;
 
 
 /**
+ * Number of animation images available in the generated image library.
+ * Valid `switchAnimation` image indices are 0 to `screen_imageCount() - 1`.
+ *
+ * @return Animation image count.
+ */
+uint8_t screen_imageCount();
+
+
+/**
  * Initialize FastLED and run screen refresh loop task.
  * @return void
  */

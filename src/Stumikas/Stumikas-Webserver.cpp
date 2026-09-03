@@ -10,6 +10,7 @@
 #include <DNSServer.h>
 #include "WString.h"
 #include "Buildibots-Serial.h"
+#include "Stumikas-Screen.h"
 #include "config-wifi.h"
 
 
@@ -108,8 +109,7 @@ namespace {
       // something out of sequence since the last call to `handle_nextAnimation`.
       lastAnimSwitch++;
 
-      // TODO Fix hardcoded max image count
-      if ( lastAnimSwitch > 5 ) { lastAnimSwitch = 0; }
+      if ( lastAnimSwitch >= (int8_t)screen_imageCount() ) { lastAnimSwitch = 0; }
       *pNextAnim = lastAnimSwitch;
 
       print_info("API call: animation switched.");
