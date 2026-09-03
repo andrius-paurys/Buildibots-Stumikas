@@ -9,7 +9,9 @@ positions in the 21x17 rectangle physically exist.
 
 Processing is done in two passes:
   Pass 1: read every frame of every input GIF and build a single RGB
-          palette shared across all of the provided images.
+          palette shared across all of the provided images. Black is
+          always index 0 and white is always index 1; every other color
+          is appended in the order it is first encountered.
   Pass 2: re-read the frames and, for every frame, emit the palette index
           of each *existing* pixel only (non-existent pixels, per the
           hardcoded circular mask, are skipped).
@@ -44,6 +46,10 @@ from PIL import Image, ImageSequence
 SCREEN_WIDTH = 21
 SCREEN_HEIGHT = 17
 EXPECTED_PIXEL_COUNT = 289
+
+# Palette slots reserved up front, in order: black is always index 0 and
+# white is always index 1, even if the input GIFs never use them.
+RESERVED_COLORS = [(0, 0, 0), (255, 255, 255)]
 
 # Number of existing pixels per row, centered within SCREEN_WIDTH. This
 # describes the physical WS2812 wiring: corner pixels of the 21x17
@@ -282,7 +288,9 @@ def main(argv=None):
 
     # --- Pass 1: load all frames and build the shared palette ---
     images_frames = []
-    palette = {}  # rgb tuple -> index (insertion order)
+    # Black and white are always reserved as indices 0 and 1, whether or not
+    # they occur in the input; every other color is appended as encountered.
+    palette = {rgb: i for i, rgb in enumerate(RESERVED_COLORS)}
     try:
         for path in gif_paths:
             frames = load_frames(path)
