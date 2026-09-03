@@ -15,8 +15,7 @@
 #include "config-pins.h"
 
 
-// Number of LEDs on the matrix. Defined by the generated image data, so that
-// the LED buffer and the frame pixel arrays can never go out of sync.
+// Number of LEDs on the matrix.
 #define NUM_LEDS    NUM_PIXELS
 #define BRIGHTNESS  30
 #define LED_CHIP    WS2812
@@ -29,6 +28,7 @@
 #define STARTUP_IMAGE_INDEX 1
 
 static_assert(STARTUP_IMAGE_INDEX < NUM_IMAGES, "STARTUP_IMAGE_INDEX is out of range");
+static_assert(NUM_IMAGES <= INT8_MAX, "Image count no longer fits the int8_t image index");
 
 
 /**
@@ -37,6 +37,12 @@ static_assert(STARTUP_IMAGE_INDEX < NUM_IMAGES, "STARTUP_IMAGE_INDEX is out of r
  * switch occurs.
 */
 int8_t switchAnimation = STARTUP_IMAGE_INDEX;
+
+/**
+ * Number of animation images available in the generated image library.
+ * Valid `switchAnimation` image indices are 0 to `SCREEN_IMAGE_COUNT - 1`.
+*/
+extern const int8_t SCREEN_IMAGE_COUNT = NUM_IMAGES;
 
 
 namespace {
@@ -118,17 +124,6 @@ namespace {
   }
 
 } // namespace
-
-
-/**
- * Number of animation images available in the generated image library.
- * Valid `switchAnimation` image indices are 0 to `screen_imageCount() - 1`.
- *
- * @return Animation image count.
- */
-uint8_t screen_imageCount() {
-  return NUM_IMAGES;
-}
 
 
 /**

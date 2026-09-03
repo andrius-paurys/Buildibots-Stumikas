@@ -109,7 +109,7 @@ namespace {
       // something out of sequence since the last call to `handle_nextAnimation`.
       lastAnimSwitch++;
 
-      if ( lastAnimSwitch >= (int8_t)screen_imageCount() ) { lastAnimSwitch = 0; }
+      if ( lastAnimSwitch >= SCREEN_IMAGE_COUNT ) { lastAnimSwitch = 0; }
       *pNextAnim = lastAnimSwitch;
 
       print_info("API call: animation switched.");
