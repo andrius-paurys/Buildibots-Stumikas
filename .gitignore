@@ -1,4 +1,8 @@
 
+# Python byte-compiled cache
+__pycache__/
+*.py[cod]
+
 # Vim swap files
 [._]*.sw[m-p]
 

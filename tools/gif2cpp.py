@@ -3,9 +3,14 @@
 gif2cpp.py - Convert animated GIF images into scaffolded C++ source code.
 
 The target hardware is a fixed 21x17 pixel circular display made of WS2812
-LEDs wired in series (row by row, with the corners of the 21x17 rectangle
-missing so the visible area approximates a circle). Only 289 of the 357
-positions in the 21x17 rectangle physically exist.
+LEDs wired in series (the corners of the 21x17 rectangle are missing so the
+visible area approximates a circle). Only 289 of the 357 positions in the
+21x17 rectangle physically exist.
+
+The strip is wired column by column: the first LED is the top-right pixel,
+data runs top to bottom down a column, then continues at the top of the
+next column to the left. Frame data is therefore emitted column-major,
+right to left, skipping positions that do not physically exist.
 
 Processing is done in two passes:
   Pass 1: read every frame of every input GIF and build a single RGB
@@ -13,8 +18,9 @@ Processing is done in two passes:
           always index 0 and white is always index 1; every other color
           is appended in the order it is first encountered.
   Pass 2: re-read the frames and, for every frame, emit the palette index
-          of each *existing* pixel only (non-existent pixels, per the
-          hardcoded circular mask, are skipped).
+          of each *existing* pixel only, in WS2812 wiring order
+          (non-existent pixels, per the hardcoded circular mask, are
+          skipped).
 
 The resulting C++ file contains:
   - the shared palette as a `CRGB` array (directly assignable to FastLED
@@ -52,8 +58,8 @@ EXPECTED_PIXEL_COUNT = 289
 RESERVED_COLORS = [(0, 0, 0), (255, 255, 255)]
 
 # Number of existing pixels per row, centered within SCREEN_WIDTH. This
-# describes the physical WS2812 wiring: corner pixels of the 21x17
-# rectangle are missing so the lit area approximates a circle.
+# describes the physical layout: corner pixels of the 21x17 rectangle are
+# missing so the lit area approximates a circle.
 ROW_WIDTHS = [9, 13, 15, 17, 19, 19, 21, 21, 21, 21, 21, 19, 19, 17, 15, 13, 9]
 
 
@@ -83,6 +89,19 @@ def build_pixel_mask():
 
 
 PIXEL_MASK = build_pixel_mask()
+
+
+def led_scan_order():
+    """Yield (y, x) grid positions of existing pixels in WS2812 wiring order.
+
+    The strip starts at the top-right corner and runs top to bottom down a
+    column, then steps one column to the left and runs top to bottom again,
+    so pixel data is emitted column-major, right to left.
+    """
+    for x in range(SCREEN_WIDTH - 1, -1, -1):
+        for y in range(SCREEN_HEIGHT):
+            if PIXEL_MASK[y][x]:
+                yield y, x
 
 
 # ---------------------------------------------------------------------------
@@ -311,13 +330,8 @@ def main(argv=None):
         frame_index_lists = []
         for frame in frames:
             indices = []
-            pos = 0
-            for y in range(SCREEN_HEIGHT):
-                for x in range(SCREEN_WIDTH):
-                    rgb = frame[pos]
-                    pos += 1
-                    if PIXEL_MASK[y][x]:
-                        indices.append(palette[rgb])
+            for y, x in led_scan_order():
+                indices.append(palette[frame[y * SCREEN_WIDTH + x]])
             assert len(indices) == EXPECTED_PIXEL_COUNT
             frame_index_lists.append(indices)
         images_indices.append(frame_index_lists)
