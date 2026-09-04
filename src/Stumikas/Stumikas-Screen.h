@@ -52,6 +52,15 @@ extern volatile bool screenAutoCycle;
 
 
 /**
+ * Time (`millis()`) the last remote control input was received at. When no input arrives
+ * for a while, the screen falls back to the idle animations on its own.
+ * Defaults to `UINT32_MAX`, so that the bot does not count as idle before it is
+ * controlled for the first time.
+*/
+extern volatile uint32_t lastControlInput;
+
+
+/**
  * Initialize FastLED and run screen refresh loop task.
  * @return void
  */

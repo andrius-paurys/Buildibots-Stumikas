@@ -27,6 +27,11 @@
 // How long each animation is shown for while cycling automatically after startup
 #define SCREEN_AUTO_CYCLE_SECONDS 6
 
+// How long the bot has to go without control input before each idle animation is shown
+#define SCREEN_IDLE_1_SECONDS 15
+#define SCREEN_IDLE_2_SECONDS 60
+#define SCREEN_IDLE_3_SECONDS 120
+
 // Animation image index that is first shown (`startup_logo` in the generated image table)
 #define STARTUP_IMAGE_INDEX IMAGE_STARTUP_LOGO
 
@@ -55,6 +60,14 @@ extern const int8_t SCREEN_IMAGE_COUNT = NUM_IMAGES;
  * actually being controlled, so that the screen only shows what the controller asks for.
 */
 volatile bool screenAutoCycle = true;
+
+/**
+ * Time (`millis()`) the last remote control input was received at. When no input arrives
+ * for a while, the screen falls back to the idle animations on its own.
+ * Defaults to `UINT32_MAX`, so that the bot does not count as idle before it is
+ * controlled for the first time.
+*/
+volatile uint32_t lastControlInput = UINT32_MAX;
 
 
 namespace {
@@ -123,7 +136,20 @@ namespace {
     TickType_t xLastAutoSwitch = xLastWakeTime;
     const TickType_t xAutoCyclePeriod = pdMS_TO_TICKS(SCREEN_AUTO_CYCLE_SECONDS * 1000);
 
-    for(;;) {
+   for(;;) {
+    
+      // While the bot is not being driven, fall back to the idle animations.
+      if (!screenAutoCycle && switchAnimation < 0) {
+
+        // lastControlInput can be in the future, for the purpose of disabling idling
+        const uint32_t now = millis();
+        const uint32_t idleTime = (now > lastControlInput) ? (now - lastControlInput) : 0;
+
+        if (idleTime >= SCREEN_IDLE_3_SECONDS * 1000UL)      { switchAnimation = IMAGE_IDLE_120; }
+        else if (idleTime >= SCREEN_IDLE_2_SECONDS * 1000UL) { switchAnimation = IMAGE_IDLE_60; }
+        else if (idleTime >= SCREEN_IDLE_1_SECONDS * 1000UL) { switchAnimation = IMAGE_IDLE_15; }
+
+      }
 
       // If a request to switch to some other animation is recorded, it is consumed here.
       if (switchAnimation > -1) {

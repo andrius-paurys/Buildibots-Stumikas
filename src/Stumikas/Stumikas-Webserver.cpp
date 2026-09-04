@@ -45,7 +45,7 @@ namespace {
   void handle_updateState(AsyncWebServerRequest *request) {
     // The bot is being controlled, so stop cycling through the animation library.
     screenAutoCycle = false;
-
+    
     // At first, if changed, the new values will be stored locally.
     int speed = *pSpeed;
     int turn = *pTurn;
@@ -62,7 +62,6 @@ namespace {
       else if ( speed < 0 ) { nextAnim = IMAGE_REVERSE; }
       else if ( speed > 210 ) { nextAnim = IMAGE_FAST_FORWARD; }
       else if ( speed > 0 ) { nextAnim = IMAGE_FORWARD; }
-      else { nextAnim = IMAGE_CUTE; }
     }
     if(request->hasParam("turn", true)) {
       turn = request->getParam("turn", true)->value().toInt();
@@ -73,7 +72,15 @@ namespace {
     }
 
     if ( speed == 0 && turn == 0 ) {
-      nextAnim = IMAGE_IDLE_15;
+      if (*pSpeed != 0 || *pTurn != 0 ) {
+        // Only go to stall animation when receiving
+        // zero'ed input for the first time this time round
+        nextAnim = IMAGE_STALL;
+      }
+    }
+    else {
+      // non-zero input received - hold off the idle animation
+      lastControlInput = millis();
     }
 
     // Read bucket angles
@@ -117,8 +124,10 @@ namespace {
   * @return void
   */
   void handle_nextAnimation(AsyncWebServerRequest *request) {
-      // The bot is being controlled, so stop cycling through the animation library.
+      // The bot is being controlled, so stop cycling through the animation library
+      // and hold off the idle animations.
       screenAutoCycle = false;
+      lastControlInput = UINT32_MAX; // this will disable idle
 
       // Can't just do `*pNextAnim++` because the animation might have already switched to
       // something out of sequence since the last call to `handle_nextAnimation`.
