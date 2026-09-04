@@ -10,6 +10,7 @@
 
 #include <FastLED.h>
 #include "Buildibots-Serial.h"
+#include "Stumikas-Screen.h"
 #include "config-pins.h"
 
 
@@ -20,6 +21,10 @@
 
 // Target refresh rate for indicator color values
 #define INDICATORS_TARGET_FPS 15
+
+// Hue change per frame while the screen is still cycling through
+// the animation library after startup
+#define INDICATORS_DEMO_HUE_SPEED 12
 
 /**
  * Current color being displayed on both indicators.
@@ -47,6 +52,11 @@ namespace {
     const TickType_t xTimeIncrement  = pdMS_TO_TICKS(1000 / INDICATORS_TARGET_FPS);
 
     for(;;) {
+
+      // Cycle hue at a fixed speed while the bot is still demoing animations
+      if(screenAutoCycle) {
+        currentColor.hue += INDICATORS_DEMO_HUE_SPEED;
+      }
 
       // Cycle hue at a speed proportinal to bot motor power
       if(*pSpeed > 0) {
