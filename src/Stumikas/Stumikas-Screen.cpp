@@ -15,7 +15,8 @@
 #include "config-pins.h"
 
 
-#define NUM_LEDS    289
+// Number of LEDs on the matrix.
+#define NUM_LEDS    NUM_PIXELS
 #define BRIGHTNESS  30
 #define LED_CHIP    WS2812
 #define COLOR_MODE  GRB
@@ -23,8 +24,20 @@
 // Target frames per second for the LED matrix screen
 #define SCREEN_TARGET_FPS 10
 
-// Animation image index that is first shown
-#define STARTUP_IMAGE_INDEX 1
+// How long each animation is shown for while cycling automatically after startup
+#define SCREEN_AUTO_CYCLE_SECONDS 6
+
+// How long the bot has to go without control input before each idle animation is shown
+#define SCREEN_IDLE_1_SECONDS 15
+#define SCREEN_IDLE_2_SECONDS 60
+#define SCREEN_IDLE_3_SECONDS 120
+
+// Animation image index that is first shown (`startup_logo` in the generated image table)
+#define STARTUP_IMAGE_INDEX IMAGE_STARTUP_LOGO
+
+static_assert(STARTUP_IMAGE_INDEX < NUM_IMAGES, "STARTUP_IMAGE_INDEX is out of range");
+static_assert(NUM_IMAGES > 1, "Auto-cycling needs at least one image besides the startup logo");
+static_assert(NUM_IMAGES <= INT8_MAX, "Image count no longer fits the int8_t image index");
 
 
 /**
@@ -33,6 +46,28 @@
  * switch occurs.
 */
 int8_t switchAnimation = STARTUP_IMAGE_INDEX;
+
+/**
+ * Number of animation images available in the generated image library.
+ * Valid `switchAnimation` image indices are 0 to `SCREEN_IMAGE_COUNT - 1`.
+*/
+extern const int8_t SCREEN_IMAGE_COUNT = NUM_IMAGES;
+
+/**
+ * While true, the screen advances to the next animation image on its own every
+ * `SCREEN_AUTO_CYCLE_SECONDS`, alternating the startup logo with one image from
+ * the library, to demo the animations after startup. Cleared once the bot is
+ * actually being controlled, so that the screen only shows what the controller asks for.
+*/
+volatile bool screenAutoCycle = true;
+
+/**
+ * Time (`millis()`) the last remote control input was received at. When no input arrives
+ * for a while, the screen falls back to the idle animations on its own.
+ * Defaults to `UINT32_MAX`, so that the bot does not count as idle before it is
+ * controlled for the first time.
+*/
+volatile uint32_t lastControlInput = UINT32_MAX;
 
 
 namespace {
@@ -43,66 +78,47 @@ namespace {
   // Index of the currently selected animation image
   uint8_t currentImage = 0;
   // Frame index from the `currentImage` that will be rendered next
-  uint8_t currentFrame = 0;
+  uint16_t currentFrame = 0;
+  // Library image to show after the next startup logo repeat, while auto-cycling
+  uint8_t autoCycleImage = (STARTUP_IMAGE_INDEX == 0) ? 1 : 0;
 
   /**
   * @brief Draw a single frame of animation to FastLED.
   * Will advance `currentFrame` value to the next frame index,
   * or will loop back to frame 0.
   *
+  * Pixel data comes from the auto-generated `IMAGES` table, where every frame
+  * is an array of `PALETTE` colour indices, one per LED.
+  *
   * @param imageIndex Index of the image to draw.
   * @param frameIndex Index of the frame to draw.
   * @return void
   */
-  void drawFrame(uint8_t imageIndex, uint8_t *frameIndex) {
+  void drawFrame(uint8_t imageIndex, uint16_t *frameIndex) {
 
     print_debug("Screen drawing image index " + String(imageIndex) + ", frame index " + String(*frameIndex));
 
-    const uint8_t (*pImage)[NUM_LEDS];
-    size_t frameCount;
+    if (imageIndex >= NUM_IMAGES) { return; }
 
-    // TODO: Put image data in structs that would also hold frame count
-    // TODO: Store animation library as an array
-    switch(imageIndex) {
-      case 0:
-        pImage = image_0;
-        frameCount = sizeof(image_0) / sizeof(image_0[0]);
-        break;
-      case 1:
-        pImage = image_1;
-        frameCount = sizeof(image_1) / sizeof(image_1[0]);
-        break;
-      case 2:
-        pImage = image_2;
-        frameCount = sizeof(image_2) / sizeof(image_2[0]);
-        break;
-      case 3:
-        pImage = image_3;
-        frameCount = sizeof(image_3) / sizeof(image_3[0]);
-        break;
-      case 4:
-        pImage = image_4;
-        frameCount = sizeof(image_4) / sizeof(image_4[0]);
-        break;
-      case 5:
-        pImage = image_5;
-        frameCount = sizeof(image_5) / sizeof(image_5[0]);
-        break;
-    }
+    const Image &image = IMAGES[imageIndex];
+    if (image.frameCount == 0) { return; }
+
+    // An out of range frame index can only happen if the image was swapped
+    // between calls, so restart the animation from the beginning.
+    if (*frameIndex >= image.frameCount) { *frameIndex = 0; }
+
+    const PixelIndex *pFrame = image.frames[*frameIndex];
 
     for(size_t i=0; i < NUM_LEDS; i++) {
-      leds[i] = palette[ pImage[*frameIndex][i] ];
-    }
-
-    // Apply brightness
-    for(size_t i=0; i < NUM_LEDS; i++) {
+      leds[i] = PALETTE[ pFrame[i] ];
+      // Apply brightness
       leds[i].nscale8_video(BRIGHTNESS);
     }
 
     FastLED.show();
 
     (*frameIndex)++;
-    if (*frameIndex >= frameCount) { *frameIndex = 0; }
+    if (*frameIndex >= image.frameCount) { *frameIndex = 0; }
   }
 
 
@@ -116,12 +132,60 @@ namespace {
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xTimeIncrement  = pdMS_TO_TICKS(1000 / SCREEN_TARGET_FPS);
 
-    for(;;) {
+    // Time the currently shown animation was selected by automatic cycling.
+    TickType_t xLastAutoSwitch = xLastWakeTime;
+    const TickType_t xAutoCyclePeriod = pdMS_TO_TICKS(SCREEN_AUTO_CYCLE_SECONDS * 1000);
+
+   for(;;) {
+    
+      // While the bot is not being driven, fall back to the idle animations.
+      if (!screenAutoCycle && switchAnimation < 0) {
+
+        // lastControlInput can be in the future, for the purpose of disabling idling
+        const uint32_t now = millis();
+        const uint32_t lastInput = lastControlInput;
+        const uint32_t idleTime = (lastInput == UINT32_MAX) ? 0 : now - lastInput;
+
+        if (idleTime >= SCREEN_IDLE_3_SECONDS * 1000UL)      { switchAnimation = IMAGE_IDLE_120; }
+        else if (idleTime >= SCREEN_IDLE_2_SECONDS * 1000UL) { switchAnimation = IMAGE_IDLE_60; }
+        else if (idleTime >= SCREEN_IDLE_1_SECONDS * 1000UL) { switchAnimation = IMAGE_IDLE_15; }
+
+      }
+
       // If a request to switch to some other animation is recorded, it is consumed here.
       if (switchAnimation > -1) {
-        currentImage = switchAnimation;
+
+        if (switchAnimation < NUM_IMAGES) {
+          if (switchAnimation != currentImage) {
+            // only reset to frame 0 if an actual switch occured
+            currentFrame = 0;
+          }
+          currentImage = switchAnimation;
+        }
+
+        else {
+          print_error("Requested animation index " + String(switchAnimation) + " does not exist.");
+        }
+
         switchAnimation = -1;
+      }
+
+      // Until the bot is controlled for the first time, walk through the animation
+      // library, showing the startup logo in between every image.
+      else if (screenAutoCycle && (xLastWakeTime - xLastAutoSwitch) >= xAutoCyclePeriod) {
+        if (currentImage == STARTUP_IMAGE_INDEX) {
+          currentImage = autoCycleImage;
+
+          // Queue up the image to show after the next logo repeat.
+          do {
+            autoCycleImage = (autoCycleImage + 1) % NUM_IMAGES;
+          } while (autoCycleImage == STARTUP_IMAGE_INDEX);
+        } else {
+          currentImage = STARTUP_IMAGE_INDEX;
+        }
+
         currentFrame = 0;
+        xLastAutoSwitch = xLastWakeTime;
       }
 
       drawFrame(currentImage, &currentFrame);

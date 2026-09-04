@@ -10,6 +10,7 @@
 #include <DNSServer.h>
 #include "WString.h"
 #include "Buildibots-Serial.h"
+#include "Stumikas-Screen.h"
 #include "config-wifi.h"
 
 
@@ -42,6 +43,7 @@ namespace {
   * @return void
   */
   void handle_updateState(AsyncWebServerRequest *request) {
+   
     // At first, if changed, the new values will be stored locally.
     int speed = *pSpeed;
     int turn = *pTurn;
@@ -54,13 +56,31 @@ namespace {
       speed = request->getParam("speed", true)->value().toInt();
       speed = constrain(speed, -255, 255);  // ensure valid range
 
-      if ( speed < -150 ) { nextAnim = 0; }
+      if ( speed < -210 ) { nextAnim = IMAGE_MAX_REVERSE; }
+      else if ( speed < 0 ) { nextAnim = IMAGE_REVERSE; }
+      else if ( speed > 210 ) { nextAnim = IMAGE_FAST_FORWARD; }
+      else if ( speed > 0 ) { nextAnim = IMAGE_FORWARD; }
     }
     if(request->hasParam("turn", true)) {
       turn = request->getParam("turn", true)->value().toInt();
       turn = constrain(turn, -255, 255); // ensure valid range
 
-      if ( turn > 150 ) { nextAnim = 3; }
+      if ( turn > 150 ) { nextAnim = IMAGE_MAX_RIGHT; }
+      else if ( turn < -150 ) { nextAnim = IMAGE_MAX_LEFT; }
+    }
+
+    if ( speed == 0 && turn == 0 ) {
+      if (*pSpeed != 0 || *pTurn != 0 ) {
+        // Only go to stall animation when receiving
+        // zero'ed input for the first time this time round
+        nextAnim = IMAGE_STALL;
+      }
+    }
+    else {
+      // The bot is being controlled, with non-zero input, so stop cycling through
+      // the animation library and hold off the idle animation
+      screenAutoCycle = false;
+      lastControlInput = millis();
     }
 
     // Read bucket angles
@@ -104,12 +124,16 @@ namespace {
   * @return void
   */
   void handle_nextAnimation(AsyncWebServerRequest *request) {
+      // The bot is being controlled, so stop cycling through the animation library
+      // and hold off the idle animations.
+      screenAutoCycle = false;
+      lastControlInput = UINT32_MAX; // this will disable idle
+
       // Can't just do `*pNextAnim++` because the animation might have already switched to
       // something out of sequence since the last call to `handle_nextAnimation`.
       lastAnimSwitch++;
 
-      // TODO Fix hardcoded max image count
-      if ( lastAnimSwitch > 5 ) { lastAnimSwitch = 0; }
+      if ( lastAnimSwitch >= SCREEN_IMAGE_COUNT ) { lastAnimSwitch = 0; }
       *pNextAnim = lastAnimSwitch;
 
       print_info("API call: animation switched.");
