@@ -43,9 +43,7 @@ namespace {
   * @return void
   */
   void handle_updateState(AsyncWebServerRequest *request) {
-    // The bot is being controlled, so stop cycling through the animation library.
-    screenAutoCycle = false;
-    
+   
     // At first, if changed, the new values will be stored locally.
     int speed = *pSpeed;
     int turn = *pTurn;
@@ -79,7 +77,9 @@ namespace {
       }
     }
     else {
-      // non-zero input received - hold off the idle animation
+      // The bot is being controlled, with non-zero input, so stop cycling through
+      // the animation library and hold off the idle animation
+      screenAutoCycle = false;
       lastControlInput = millis();
     }
 
