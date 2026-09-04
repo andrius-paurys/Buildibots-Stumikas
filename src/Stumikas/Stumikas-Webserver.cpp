@@ -43,6 +43,9 @@ namespace {
   * @return void
   */
   void handle_updateState(AsyncWebServerRequest *request) {
+    // The bot is being controlled, so stop cycling through the animation library.
+    screenAutoCycle = false;
+
     // At first, if changed, the new values will be stored locally.
     int speed = *pSpeed;
     int turn = *pTurn;
@@ -105,6 +108,9 @@ namespace {
   * @return void
   */
   void handle_nextAnimation(AsyncWebServerRequest *request) {
+      // The bot is being controlled, so stop cycling through the animation library.
+      screenAutoCycle = false;
+
       // Can't just do `*pNextAnim++` because the animation might have already switched to
       // something out of sequence since the last call to `handle_nextAnimation`.
       lastAnimSwitch++;

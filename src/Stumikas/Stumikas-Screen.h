@@ -44,6 +44,14 @@ extern const int8_t SCREEN_IMAGE_COUNT;
 
 
 /**
+ * While true, the screen advances to the next animation image on its own every
+ * SCREEN_AUTO_CYCLE_SECONDS seconds, to demo the animation library after startup. Set to
+ * false to stop the cycling and keep showing the animation that was selected last.
+*/
+extern volatile bool screenAutoCycle;
+
+
+/**
  * Initialize FastLED and run screen refresh loop task.
  * @return void
  */

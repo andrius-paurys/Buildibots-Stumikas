@@ -24,10 +24,14 @@
 // Target frames per second for the LED matrix screen
 #define SCREEN_TARGET_FPS 10
 
+// How long each animation is shown for while cycling automatically after startup
+#define SCREEN_AUTO_CYCLE_SECONDS 6
+
 // Animation image index that is first shown (`startup_logo` in the generated image table)
 #define STARTUP_IMAGE_INDEX IMAGE_STARTUP_LOGO
 
 static_assert(STARTUP_IMAGE_INDEX < NUM_IMAGES, "STARTUP_IMAGE_INDEX is out of range");
+static_assert(NUM_IMAGES > 1, "Auto-cycling needs at least one image besides the startup logo");
 static_assert(NUM_IMAGES <= INT8_MAX, "Image count no longer fits the int8_t image index");
 
 
@@ -44,6 +48,14 @@ int8_t switchAnimation = STARTUP_IMAGE_INDEX;
 */
 extern const int8_t SCREEN_IMAGE_COUNT = NUM_IMAGES;
 
+/**
+ * While true, the screen advances to the next animation image on its own every
+ * `SCREEN_AUTO_CYCLE_SECONDS`, alternating the startup logo with one image from
+ * the library, to demo the animations after startup. Cleared once the bot is
+ * actually being controlled, so that the screen only shows what the controller asks for.
+*/
+volatile bool screenAutoCycle = true;
+
 
 namespace {
 
@@ -54,6 +66,8 @@ namespace {
   uint8_t currentImage = 0;
   // Frame index from the `currentImage` that will be rendered next
   uint16_t currentFrame = 0;
+  // Library image to show after the next startup logo repeat, while auto-cycling
+  uint8_t autoCycleImage = (STARTUP_IMAGE_INDEX == 0) ? 1 : 0;
 
   /**
   * @brief Draw a single frame of animation to FastLED.
@@ -105,7 +119,12 @@ namespace {
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xTimeIncrement  = pdMS_TO_TICKS(1000 / SCREEN_TARGET_FPS);
 
+    // Time the currently shown animation was selected by automatic cycling.
+    TickType_t xLastAutoSwitch = xLastWakeTime;
+    const TickType_t xAutoCyclePeriod = pdMS_TO_TICKS(SCREEN_AUTO_CYCLE_SECONDS * 1000);
+
     for(;;) {
+      
       // If a request to switch to some other animation is recorded, it is consumed here.
       if (switchAnimation > -1) {
         if (switchAnimation < NUM_IMAGES) {
@@ -115,6 +134,24 @@ namespace {
           print_error("Requested animation index " + String(switchAnimation) + " does not exist.");
         }
         switchAnimation = -1;
+      }
+
+      // Until the bot is controlled for the first time, walk through the animation
+      // library, showing the startup logo in between every image.
+      else if (screenAutoCycle && (xLastWakeTime - xLastAutoSwitch) >= xAutoCyclePeriod) {
+        if (currentImage == STARTUP_IMAGE_INDEX) {
+          currentImage = autoCycleImage;
+
+          // Queue up the image to show after the next logo repeat.
+          do {
+            autoCycleImage = (autoCycleImage + 1) % NUM_IMAGES;
+          } while (autoCycleImage == STARTUP_IMAGE_INDEX);
+        } else {
+          currentImage = STARTUP_IMAGE_INDEX;
+        }
+
+        currentFrame = 0;
+        xLastAutoSwitch = xLastWakeTime;
       }
 
       drawFrame(currentImage, &currentFrame);
