@@ -25,7 +25,7 @@
 #define SCREEN_TARGET_FPS 10
 
 // Animation image index that is first shown (`startup_logo` in the generated image table)
-#define STARTUP_IMAGE_INDEX 1
+#define STARTUP_IMAGE_INDEX IMAGE_STARTUP_LOGO
 
 static_assert(STARTUP_IMAGE_INDEX < NUM_IMAGES, "STARTUP_IMAGE_INDEX is out of range");
 static_assert(NUM_IMAGES <= INT8_MAX, "Image count no longer fits the int8_t image index");
