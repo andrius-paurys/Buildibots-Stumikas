@@ -143,7 +143,8 @@ namespace {
 
         // lastControlInput can be in the future, for the purpose of disabling idling
         const uint32_t now = millis();
-        const uint32_t idleTime = (now > lastControlInput) ? (now - lastControlInput) : 0;
+      const uint32_t lastInput = lastControlInput;
+      const uint32_t idleTime = (lastInput == UINT32_MAX) ? 0 : now - lastInput;
 
         if (idleTime >= SCREEN_IDLE_3_SECONDS * 1000UL)      { switchAnimation = IMAGE_IDLE_120; }
         else if (idleTime >= SCREEN_IDLE_2_SECONDS * 1000UL) { switchAnimation = IMAGE_IDLE_60; }
