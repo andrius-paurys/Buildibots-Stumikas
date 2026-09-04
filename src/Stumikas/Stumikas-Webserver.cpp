@@ -58,13 +58,22 @@ namespace {
       speed = request->getParam("speed", true)->value().toInt();
       speed = constrain(speed, -255, 255);  // ensure valid range
 
-      if ( speed < -150 ) { nextAnim = 0; }
+      if ( speed < -210 ) { nextAnim = IMAGE_MAX_REVERSE; }
+      else if ( speed < 0 ) { nextAnim = IMAGE_REVERSE; }
+      else if ( speed > 210 ) { nextAnim = IMAGE_FAST_FORWARD; }
+      else if ( speed > 0 ) { nextAnim = IMAGE_FORWARD; }
+      else { nextAnim = IMAGE_CUTE; }
     }
     if(request->hasParam("turn", true)) {
       turn = request->getParam("turn", true)->value().toInt();
       turn = constrain(turn, -255, 255); // ensure valid range
 
-      if ( turn > 150 ) { nextAnim = 3; }
+      if ( turn > 150 ) { nextAnim = IMAGE_MAX_RIGHT; }
+      else if ( turn < -150 ) { nextAnim = IMAGE_MAX_LEFT; }
+    }
+
+    if ( speed == 0 && turn == 0 ) {
+      nextAnim = IMAGE_IDLE_15;
     }
 
     // Read bucket angles

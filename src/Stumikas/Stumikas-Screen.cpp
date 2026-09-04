@@ -124,15 +124,22 @@ namespace {
     const TickType_t xAutoCyclePeriod = pdMS_TO_TICKS(SCREEN_AUTO_CYCLE_SECONDS * 1000);
 
     for(;;) {
-      
+
       // If a request to switch to some other animation is recorded, it is consumed here.
       if (switchAnimation > -1) {
+
         if (switchAnimation < NUM_IMAGES) {
+          if (switchAnimation != currentImage) {
+            // only reset to frame 0 if an actual switch occured
+            currentFrame = 0;
+          }
           currentImage = switchAnimation;
-          currentFrame = 0;
-        } else {
+        }
+
+        else {
           print_error("Requested animation index " + String(switchAnimation) + " does not exist.");
         }
+
         switchAnimation = -1;
       }
 
