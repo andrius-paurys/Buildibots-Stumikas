@@ -16,7 +16,9 @@ Processing is done in two passes:
   Pass 1: read every frame of every input GIF and build a single RGB
           palette shared across all of the provided images. Black is
           always index 0 and white is always index 1; every other color
-          is appended in the order it is first encountered.
+          is appended in the order it is first encountered. Transparent
+          pixels are forced to black rather than contributing their
+          underlying RGB value.
   Pass 2: re-read the frames and, for every frame, emit the palette index
           of each *existing* pixel only, in WS2812 wiring order
           (non-existent pixels, per the hardcoded circular mask, are
@@ -55,7 +57,13 @@ EXPECTED_PIXEL_COUNT = 289
 
 # Palette slots reserved up front, in order: black is always index 0 and
 # white is always index 1, even if the input GIFs never use them.
-RESERVED_COLORS = [(0, 0, 0), (255, 255, 255)]
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RESERVED_COLORS = [BLACK, WHITE]
+
+# Pixels whose alpha is below this are treated as transparent and forced to
+# BLACK (palette index 0), discarding whatever RGB value they carried.
+ALPHA_THRESHOLD = 128
 
 # Number of existing pixels per row, centered within SCREEN_WIDTH. This
 # describes the physical layout: corner pixels of the 21x17 rectangle are
@@ -110,7 +118,7 @@ def led_scan_order():
 
 
 def get_pixel_data(im):
-    """Flat list of (r, g, b) tuples in row-major order, using the newer
+    """Flat list of (r, g, b, a) tuples in row-major order, using the newer
     Pillow API when available (getdata() is deprecated as of Pillow 12)."""
     if hasattr(im, "get_flattened_data"):
         return list(im.get_flattened_data())
@@ -120,18 +128,25 @@ def get_pixel_data(im):
 def load_frames(path):
     """Return a list of frames for one GIF, each frame a flat list of
     (r, g, b) tuples in row-major order (length SCREEN_WIDTH * SCREEN_HEIGHT).
-    Transparency is ignored: each pixel's plain RGB value is used as-is.
+
+    Transparent pixels carry no meaningful color, so their RGB data is
+    discarded and they are reported as BLACK (palette index 0).
     """
     im = Image.open(path)
     frames = []
     for frame in ImageSequence.Iterator(im):
-        rgb_frame = frame.convert("RGB")
-        if rgb_frame.size != (SCREEN_WIDTH, SCREEN_HEIGHT):
+        rgba_frame = frame.convert("RGBA")
+        if rgba_frame.size != (SCREEN_WIDTH, SCREEN_HEIGHT):
             raise ValueError(
-                f"{path}: frame {len(frames)} size {rgb_frame.size} != "
+                f"{path}: frame {len(frames)} size {rgba_frame.size} != "
                 f"expected {(SCREEN_WIDTH, SCREEN_HEIGHT)}"
             )
-        frames.append(get_pixel_data(rgb_frame))
+        frames.append(
+            [
+                (r, g, b) if a >= ALPHA_THRESHOLD else BLACK
+                for r, g, b, a in get_pixel_data(rgba_frame)
+            ]
+        )
 
     if not frames:
         raise ValueError(f"{path}: no frames found")
